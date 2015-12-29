@@ -76,8 +76,8 @@ typedef struct {
 #define CMD_ERR(cmd) (((cmd) & 0x3F00) >> 8)
 #define CMD_CMD(cmd) ((cmd) & 0x00FF)
 
-void parse_adu(ts_client_t *pmc);
-void parse_pdu(ts_client_t *pmc, ts_adu_head_t *adu_head);
-void parse_pdu_reg(ts_client_t *pmc, ts_adu_head_t *adu_head);
-ts_req_t* parse_pdu_info(ts_client_t *pmc, ts_adu_head_t *adu_head);
-ts_req_t* parse_pdu_none(ts_client_t *pmc, ts_adu_head_t *adu_head);
+void parse_adu(ts_client_c *pmc);
+void parse_pdu(ts_client_c *pmc, ts_adu_head_t *adu_head);
+void parse_pdu_reg(ts_client_c *pmc, ts_adu_head_t *adu_head);
+ts_req_c* parse_pdu_info(ts_client_c *pmc, ts_adu_head_t *adu_head);
+ts_req_c* parse_pdu_none(ts_client_c *pmc, ts_adu_head_t *adu_head);

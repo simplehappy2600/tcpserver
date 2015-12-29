@@ -12,7 +12,7 @@ Description:  use libuv v1.7.5  https://github.com/libuv/libuv
 #include "ts_server.h"
 #include "ts_result.h"
 
-LIB_PM_SERVER_API ts_result_c * pm_fini_server()
+LIB_TS_SERVER_API ts_result_c * ts_fini_server()
 {
 	//TODO
 	uv_stop(uv_default_loop());
@@ -20,7 +20,7 @@ LIB_PM_SERVER_API ts_result_c * pm_fini_server()
 	return NULL;
 }
 
-LIB_PM_SERVER_API ts_result_c * pm_init_server(int port, TS_RESULT_CB cb)
+LIB_TS_SERVER_API ts_result_c * ts_init_server(int port, TS_RESULT_CB cb)
 {
 	ts_util::p(__FUNCTION__);
 
@@ -30,7 +30,7 @@ LIB_PM_SERVER_API ts_result_c * pm_init_server(int port, TS_RESULT_CB cb)
 		return NULL;
 	}
 
-	ts_req_t *req = ts_req_t::newInstance(NULL, NULL, cb);
+	ts_req_c *req = ts_req_c::newInstance(NULL, NULL, cb);
 	req->data.port = port;
 	req->result = result;	
 
@@ -50,7 +50,7 @@ LIB_PM_SERVER_API ts_result_c * pm_init_server(int port, TS_RESULT_CB cb)
 		goto pm_fail;
 	}
 
-	int r = uv_thread_create(loop_th, ts_loop_th, req);	
+	int r = uv_thread_create(loop_th, ts_server_c::ts_loop_th, req);	
 	if (r != 0){
 		result->setResult(TS_ERR::INIT_ERR, "uv_thread_create fail");
 		goto pm_fail;
@@ -71,7 +71,7 @@ pm_fail:
 	}
     return result;
 }
-static ts_result_c * send_req(ts_req_t *req)
+static ts_result_c * send_req(ts_req_c *req)
 {
 	ts_util::p(__FUNCTION__ " req: 0%x", req);
 	ts_result_c *result = req->result_cb ? NULL : req->result;
@@ -87,7 +87,7 @@ static ts_result_c * send_req(ts_req_t *req)
 	}
 
 	uv_async_t *async = (uv_async_t *)malloc(sizeof(uv_async_t));
-	int r = uv_async_init(uv_default_loop(), async, send_req_async);	
+	int r = uv_async_init(uv_default_loop(), async, ts_server_c::send_req_async);	
 	async->data = req;
 	r = uv_async_send(async);
 	if (r != 0){
@@ -111,11 +111,11 @@ pm_exit:
 	return result;
 }
 
-LIB_PM_SERVER_API ts_result_c *send_cmd_info(uint32_t devid, int cmd, TS_RESULT_CB cb)
+LIB_TS_SERVER_API ts_result_c *send_cmd_info(uint32_t devid, int cmd, TS_RESULT_CB cb)
 {
 	ts_util::p(__FUNCTION__ " -------------------------in------------------");
 
-	ts_req_t *req = ts_req_t::newInstance(devid, cmd, cb);
+	ts_req_c *req = ts_req_c::newInstance(devid, cmd, cb);
 	req->result = new ts_result_c;
 
 	return send_req(req);
@@ -129,7 +129,7 @@ static ts_result_c*  send_cmd_pause(uint32_t devid, int cmd, uint8_t status, TS_
 		return NULL;
 	}
 
-	ts_req_t *req = ts_req_t::newInstance(devid, cmd, cb);	
+	ts_req_c *req = ts_req_c::newInstance(devid, cmd, cb);	
 	req->result = result;
 	
 	req->data.status = status;	
@@ -137,7 +137,7 @@ static ts_result_c*  send_cmd_pause(uint32_t devid, int cmd, uint8_t status, TS_
 	return send_req(req);
 }
 
-LIB_PM_SERVER_API void pm_free_result(ts_result_c *p)
+LIB_TS_SERVER_API void ts_free_result(ts_result_c *p)
 {
 	if (p) {
 		delete p;

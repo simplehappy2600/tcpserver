@@ -10,12 +10,12 @@ Description:
 #include "ts_client.h"
 #include "ts_util.h"
 
-ts_req_t* ts_req_t::newInstance(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb)
+ts_req_c* ts_req_c::newInstance(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb)
 {
-	return new ts_req_t(devid, cmd, result_cb);
+	return new ts_req_c(devid, cmd, result_cb);
 }
 
-void ts_req_t::clean(ts_req_t *req)
+void ts_req_c::clean(ts_req_c *req)
 {
 	if (req){
 		//
@@ -23,7 +23,7 @@ void ts_req_t::clean(ts_req_t *req)
 	}
 }
 
-ts_req_t::ts_req_t(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb){
+ts_req_c::ts_req_c(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb){
 	this->seq = NULL;
 	this->sem = NULL;
 	this->timer = NULL;
@@ -36,14 +36,14 @@ ts_req_t::ts_req_t(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb){
 
 static void pm_cmd_req_timeout(uv_timer_t* handle)
 {		
-	ts_req_t *req = (ts_req_t *)handle->data;	
+	ts_req_c *req = (ts_req_c *)handle->data;	
 	ts_util::p(__FUNCTION__ " req: 0x%x", req);
 
 	//TODO 调用uv_timer_stop会不会有问题?
 	req->finish(TS_ERR::TIMEOUT, "timeout");
 }
 
-void ts_req_t::start_timer()
+void ts_req_c::start_timer()
 {	
 	ts_util::p(__FUNCTION__ " start timer req: %x", this);
 
@@ -58,12 +58,12 @@ void ts_req_t::start_timer()
 	}
 }
 
-void ts_req_t::finish(int err, char *msg)
+void ts_req_c::finish(int err, char *msg)
 {
 	this->finish(true, err, msg);
 }
 
-void ts_req_t::finish(bool del_from_client, int err, char *msg)
+void ts_req_c::finish(bool del_from_client, int err, char *msg)
 {
 	ts_util::p(__FUNCTION__" req: %x", this);
 	if (del_from_client && this->client){

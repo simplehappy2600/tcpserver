@@ -7,6 +7,9 @@ Description:
 
 #pragma once
 
-void ts_loop_th(void *arg);
+class ts_server_c {
+public:
+	static void ts_loop_th(void *arg);
+	static void send_req_async(uv_async_t* handle);
+};
 
-void send_req_async(uv_async_t* handle);

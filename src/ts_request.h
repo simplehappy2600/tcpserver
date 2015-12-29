@@ -10,7 +10,7 @@ Description:
 #include "uv.h"
 #include "ts_result.h"
 
-class ts_client_t;
+class ts_client_c;
 
 //请求的数据
 typedef union ts_req_data_u {	
@@ -23,16 +23,16 @@ typedef union ts_req_data_u {
 } ts_req_data_t;
 
 //
-class ts_req_t {
+class ts_req_c {
 public:
-	static ts_req_t* ts_req_t::newInstance(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb);
-	static void clean(ts_req_t *req);
+	static ts_req_c* ts_req_c::newInstance(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb);
+	static void clean(ts_req_c *req);
 	void start_timer();
 	void finish(int err, char *msg);
 	void finish(bool del_from_client, int err, char *msg);	
 private:
-	ts_req_t(){}
-	ts_req_t(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb);
+	ts_req_c(){}
+	ts_req_c(uint32_t devid, uint16_t cmd, TS_RESULT_CB result_cb);
 public:
 	uint32_t devid;
 	uint16_t cmd;
@@ -40,7 +40,7 @@ public:
 	uv_sem_t *sem;
 	
 	uv_timer_t *timer;
-	ts_client_t *client;
+	ts_client_c *client;
 
 	ts_req_data_t data;
 	ts_result_c* result;

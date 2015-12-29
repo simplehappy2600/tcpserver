@@ -6,16 +6,17 @@ Description:
 **************************************************/
 
 #include "stdafx.h"
-#include "lib_ts_server.h"
+//#include "lib_ts_server.h"
 #include "ts_protocol.h"
 #include "ts_util.h"
+#include "ts_server.h"
 
 #define DEFAULT_PORT 8899
 #define DEFAULT_BACKLOG 128
 
-void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
+static void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
 
-	ts_client_t* pmc = (ts_client_t *)handle->data;	
+	ts_client_c* pmc = (ts_client_c *)handle->data;	
 
 	if (pmc->recv_data_len ==  pmc->recv_buf_len){
 		ts_util::p(__FUNCTION__ " realloc recv buf");
@@ -27,13 +28,13 @@ void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
 	buf->len = pmc->recv_buf_len - pmc->recv_data_len;	
 }
 
-void pm_close_cb(uv_handle_t* handle)
+static void ts_close_cb(uv_handle_t* handle)
 {
 	ts_util::p(__FUNCTION__ " connection close");
 	if (handle->data){		
-		ts_client_t* pmc = (ts_client_t*)handle->data;		
+		ts_client_c* pmc = (ts_client_c*)handle->data;		
 		pmc->close();		
-		ts_util::p(__FUNCTION__ " free ts_client_t: 0x%x", pmc);
+		ts_util::p(__FUNCTION__ " free ts_client_c: 0x%x", pmc);
 		delete pmc;
 	} else {
 
@@ -41,21 +42,21 @@ void pm_close_cb(uv_handle_t* handle)
 }
 
 //数据接收
-void pm_read_cb(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
+static void ts_read_cb(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
 	
 	if (nread < 0) {
         if (nread != UV_EOF) {
             fprintf(stderr, "\nRead error %s", uv_err_name(nread));
 		}
-        uv_close((uv_handle_t*) client, pm_close_cb);
+        uv_close((uv_handle_t*) client, ts_close_cb);
     } else if (nread > 0) {
-		ts_client_t *pmc = (ts_client_t *)client->data;
+		ts_client_c *pmc = (ts_client_c *)client->data;
 		pmc->recv_data_len += nread;
 		parse_adu(pmc);
     }
 }
 
-void on_new_connection(uv_stream_t *server, int status) 
+static void on_new_connection(uv_stream_t *server, int status) 
 {	
 	ts_util::p(__FUNCTION__);
 
@@ -71,8 +72,8 @@ void on_new_connection(uv_stream_t *server, int status)
     if (uv_accept(server, (uv_stream_t*) client) == 0) {
 		ts_util::p(__FUNCTION__ " accept connection");
 		//新建客户端，开始接收数据
-		ts_client_t *pmc = new ts_client_t(client);
-        uv_read_start((uv_stream_t*) client, alloc_buffer, pm_read_cb);
+		ts_client_c *pmc = new ts_client_c(client);
+        uv_read_start((uv_stream_t*) client, alloc_buffer, ts_read_cb);
     }
     else {
         uv_close((uv_handle_t*) client, NULL);
@@ -80,11 +81,11 @@ void on_new_connection(uv_stream_t *server, int status)
 }
 
 //loop在此线程
-void ts_loop_th(void *arg)
+void ts_server_c::ts_loop_th(void *arg)
 {	
 	ts_util::p(__FUNCTION__ "in");
 
-	ts_req_t *req = (ts_req_t *)arg;
+	ts_req_c *req = (ts_req_c *)arg;
 	int port = req->data.port;	
 
 	int r = 0;
@@ -134,12 +135,12 @@ void ts_loop_th(void *arg)
 	return;
 }
 
-void send_req_async(uv_async_t* handle)
+void ts_server_c::send_req_async(uv_async_t* handle)
 {
 	ts_util::p(__FUNCTION__);
 
-	ts_req_t *req = (ts_req_t *)handle->data;
-	ts_client_t::send_req(req);
+	ts_req_c *req = (ts_req_c *)handle->data;
+	ts_client_c::send_req(req);
 
 	free(handle);
 }

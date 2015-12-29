@@ -9,7 +9,7 @@ Description:
 #include "ts_protocol.h"
 #include "ts_util.h"
 
-void parse_adu(ts_client_t *pmc)
+void parse_adu(ts_client_c *pmc)
 {	
 	ts_util::p(__FUNCTION__"+++++++++++++++++++++++++++++++++++");
 	ts_util::showHex((unsigned char *)pmc->recv_buf, pmc->recv_data_len);	
@@ -60,9 +60,9 @@ void parse_adu(ts_client_t *pmc)
 	}
 }
 
-void parse_pdu(ts_client_t *pmc, ts_adu_head_t *adu_head)
+void parse_pdu(ts_client_c *pmc, ts_adu_head_t *adu_head)
 {
-	ts_req_t* req = NULL;
+	ts_req_c* req = NULL;
 	uint16_t cmd = CMD_CMD(ntohs(adu_head->cmd));
 	switch (cmd){
 	case TS_CMD::REG:
@@ -81,11 +81,11 @@ void parse_pdu(ts_client_t *pmc, ts_adu_head_t *adu_head)
 	}
 
 	if (req){
-		ts_req_t::clean(req);
+		ts_req_c::clean(req);
 	}
 }
 
-void parse_pdu_reg(ts_client_t *pmc, ts_adu_head_t *adu_head)
+void parse_pdu_reg(ts_client_c *pmc, ts_adu_head_t *adu_head)
 {
 	ts_pdu_devid_t * pdu_devid = (ts_pdu_devid_t *)(pmc->recv_buf + LEN_ADU_HEAD);	
 	pmc->devid = ntohl(pdu_devid->devid);
@@ -98,13 +98,13 @@ void parse_pdu_reg(ts_client_t *pmc, ts_adu_head_t *adu_head)
 	pmc->send_pdu(pmc->get_send_buf(0), CMD_RESP(cmd, TS_CMD_ERR::OK), seq, 0);
 }
 
-ts_req_t* parse_pdu_info(ts_client_t *pmc, ts_adu_head_t *adu_head)
+ts_req_c* parse_pdu_info(ts_client_c *pmc, ts_adu_head_t *adu_head)
 {
 	ts_pdu_str_t *pdu = (ts_pdu_str_t *)(pmc->recv_buf + LEN_ADU_HEAD);	
 	int seq = ntohs(adu_head->seq);	
 	ts_util::p(__FUNCTION__ " seq: %d", seq);
 	
-	ts_req_t *req = pmc->get_req(seq);
+	ts_req_c *req = pmc->get_req(seq);
 	if (req){
 		ts_util::p(__FUNCTION__ " get req[%x] by seq: %d", req, seq);
 		req->result->count = ntohl(pdu->total);
@@ -124,11 +124,11 @@ ts_req_t* parse_pdu_info(ts_client_t *pmc, ts_adu_head_t *adu_head)
 	return req;
 }
 
-ts_req_t* parse_pdu_none(ts_client_t *pmc, ts_adu_head_t *adu_head)
+ts_req_c* parse_pdu_none(ts_client_c *pmc, ts_adu_head_t *adu_head)
 {	
 	int seq = ntohs(adu_head->seq);
 	
-	ts_req_t *req = pmc->get_req(seq);
+	ts_req_c *req = pmc->get_req(seq);
 	if (req){		
 		req->finish(TS_ERR::OK, "ok");
 	} else {

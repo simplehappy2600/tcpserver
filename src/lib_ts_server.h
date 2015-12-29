@@ -6,10 +6,10 @@ Description:
 **************************************************/
 
 #pragma once
-#ifdef LIB_PM_SERVER_EXPORTS
-#define LIB_PM_SERVER_API __declspec(dllexport)
+#ifdef LIB_TS_SERVER_EXPORTS
+#define LIB_TS_SERVER_API __declspec(dllexport)
 #else
-#define LIB_PM_SERVER_API __declspec(dllimport)
+#define LIB_TS_SERVER_API __declspec(dllimport)
 #endif
 
 extern "C" {
@@ -25,22 +25,22 @@ extern "C" {
 
 /*
  * init service
- * param port: 监听端口, 0: 使用默认6666 
+ * param port: 监听端口, 0: 使用默认 
  */
-LIB_PM_SERVER_API ts_result_c * pm_init_server(int port, TS_RESULT_CB cb);
+LIB_TS_SERVER_API ts_result_c * ts_init_server(int port, TS_RESULT_CB cb);
 /*
  * close service
  */
-LIB_PM_SERVER_API ts_result_c * pm_fini_server(TS_RESULT_CB cb);
+LIB_TS_SERVER_API ts_result_c * ts_fini_server(TS_RESULT_CB cb);
 
 //cmd get info from client
-LIB_PM_SERVER_API ts_result_c * send_cmd_info(uint32_t devid, int cmd, TS_RESULT_CB cb);
+LIB_TS_SERVER_API ts_result_c * send_cmd_info(uint32_t devid, int cmd, TS_RESULT_CB cb);
 //cmd to control client
-LIB_PM_SERVER_API ts_result_c * pm_cmd_pause(uint32_t devid, uint8_t status, TS_RESULT_CB cb);
+LIB_TS_SERVER_API ts_result_c * send_cmd_pause(uint32_t devid, uint8_t status, TS_RESULT_CB cb);
 
 /*
  * free result
  */
-LIB_PM_SERVER_API void pm_free_result(ts_result_c *p);
+LIB_TS_SERVER_API void ts_free_result(ts_result_c *p);
 
 }

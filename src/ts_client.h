@@ -15,29 +15,29 @@ Description:
 #define TS_SEND_BUF_LEN 512
 
 //¿Í»§¶Ë
-class ts_client_t {
+class ts_client_c {
 public:
-	ts_client_t(uv_tcp_t *handle);
-	~ts_client_t();
+	ts_client_c(uv_tcp_t *handle);
+	~ts_client_c();
 	void reg();
 	void unreg();
 	void close();
 
 	char *get_send_buf(int pdu_len);
-	static void send_req(ts_req_t *req);
+	static void send_req(ts_req_c *req);
 	int send_adu(char *buf, int len);
-	void send_pdu(char *send_buf, ts_req_t *req, uint32_t pdu_len);
+	void send_pdu(char *send_buf, ts_req_c *req, uint32_t pdu_len);
 	void send_pdu(char *send_buf, uint16_t cmd, uint16_t seq, uint32_t pdu_len);	
 	void send_resp(uint16_t cmd, uint16_t seq, int err, char *msg);
 
-	void add_req(ts_req_t *req);
-	void del_req(ts_req_t *req);
-	ts_req_t *get_req(int seq);
+	void add_req(ts_req_c *req);
+	void del_req(ts_req_c *req);
+	ts_req_c *get_req(int seq);
 private:	
 	uint16_t getSeq();
-	void send_cmd_info(ts_req_t *req);	
-	void send_cmd_pause(ts_req_t *req);			
-	void send_req_pdu(char *send_buf, ts_req_t *req, uint32_t pdu_len);	
+	void send_cmd_info(ts_req_c *req);	
+	void send_cmd_pause(ts_req_c *req);			
+	void send_req_pdu(char *send_buf, ts_req_c *req, uint32_t pdu_len);	
 public:
 	uv_tcp_t *handle;
 	char *recv_buf;
@@ -51,18 +51,18 @@ public:
 
 	uint32_t devid;		 //deviceId
 private:
-	std::map<uint32_t, ts_req_t *> reqs;
+	std::map<uint32_t, ts_req_c *> reqs;
 	uint16_t req_seq;
 } ;
 
 class ts_client_holder {
 public:
 	ts_client_holder();
-	void add(ts_client_t *client);
-	void remove(ts_client_t *client);
-	ts_client_t *get(uint32_t devid);
+	void add(ts_client_c *client);
+	void remove(ts_client_c *client);
+	ts_client_c *get(uint32_t devid);
 private:
 	uv_mutex_t mutex;
-	std::map<uint32_t, ts_client_t*> clients;
+	std::map<uint32_t, ts_client_c*> clients;
 };
 

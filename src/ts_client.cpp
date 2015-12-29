@@ -19,11 +19,11 @@ ts_client_holder::ts_client_holder()
 	uv_mutex_init(&this->mutex);
 }
 
-void ts_client_holder::add(ts_client_t *client)
+void ts_client_holder::add(ts_client_c *client)
 {
 	uv_mutex_lock(&this->mutex);
 
-	ts_client_t *p = clients[client->devid];
+	ts_client_c *p = clients[client->devid];
 	if (!p){
 		clients[client->devid] = client;
 	}
@@ -31,11 +31,11 @@ void ts_client_holder::add(ts_client_t *client)
 	uv_mutex_unlock(&this->mutex);
 }
 
-void ts_client_holder::remove(ts_client_t *client)
+void ts_client_holder::remove(ts_client_c *client)
 {
 	uv_mutex_lock(&this->mutex);
 
-	ts_client_t *p = clients[client->devid];
+	ts_client_c *p = clients[client->devid];
 	if (p){
 		clients.erase(client->devid);
 	}	
@@ -43,17 +43,17 @@ void ts_client_holder::remove(ts_client_t *client)
 	uv_mutex_unlock(&this->mutex);
 }
 
-ts_client_t *ts_client_holder::get(uint32_t devid)
+ts_client_c *ts_client_holder::get(uint32_t devid)
 {
 	uv_mutex_lock(&this->mutex);
-	ts_client_t *p = clients[devid];
+	ts_client_c *p = clients[devid];
 	uv_mutex_unlock(&this->mutex);
 
 	return p;
 }
 
 //----------------------------------------------------------------
-ts_client_t::ts_client_t(uv_tcp_t *handle) : req_seq(0), handle(NULL), devid(-1), recv_data_len(0), send_buf_ex(NULL)
+ts_client_c::ts_client_c(uv_tcp_t *handle) : req_seq(0), handle(NULL), devid(-1), recv_data_len(0), send_buf_ex(NULL)
 {
 	this->handle = handle;
 	handle->data = this;
@@ -62,26 +62,26 @@ ts_client_t::ts_client_t(uv_tcp_t *handle) : req_seq(0), handle(NULL), devid(-1)
 	this->recv_buf = (char *)malloc(recv_buf_len);
 }
 
-ts_client_t::~ts_client_t()
+ts_client_c::~ts_client_c()
 {
 	if (this->recv_buf){
 		free(this->recv_buf);
 	}
 }
 
-void ts_client_t::reg()
+void ts_client_c::reg()
 {	
 	ts_util::p(__FUNCTION__ " devid: 0x%x", this->devid);
 	pm_clients.add(this);
 }
 
-void ts_client_t::unreg()
+void ts_client_c::unreg()
 {
 	ts_util::p(__FUNCTION__ "devid: 0x%x", this->devid);
 	pm_clients.remove(this);
 }
 
-uint16_t ts_client_t::getSeq()
+uint16_t ts_client_c::getSeq()
 {
 	req_seq++;
 	if (req_seq == 0){
@@ -92,7 +92,7 @@ uint16_t ts_client_t::getSeq()
 
 static void pm_write_cb(uv_write_t *req, int status) {
 
-	ts_client_t *client = (ts_client_t *)req->data;
+	ts_client_c *client = (ts_client_c *)req->data;
 
     if (status) {
         fprintf(stderr, "Write error %s\n", uv_strerror(status));
@@ -108,7 +108,7 @@ static void pm_write_cb(uv_write_t *req, int status) {
 	}
 }
 
-int ts_client_t::send_adu(char *send_buf, int len)
+int ts_client_c::send_adu(char *send_buf, int len)
 {
 	ts_util::p(__FUNCTION__ "send: ");
 	ts_util::showHex((unsigned char *)send_buf, len);
@@ -125,27 +125,27 @@ int ts_client_t::send_adu(char *send_buf, int len)
 	}
 }
 
-void ts_client_t::close()
+void ts_client_c::close()
 {		
 	ts_util::p(__FUNCTION__);
 	this->unreg();
 	
 	ts_util::p(__FUNCTION__" reqs size: %d", reqs.size());
-	for(std::map<uint32_t, ts_req_t *>::iterator iter = reqs.begin(); iter != reqs.end(); iter++) {
-		ts_req_t *req = iter->second;
+	for(std::map<uint32_t, ts_req_c *>::iterator iter = reqs.begin(); iter != reqs.end(); iter++) {
+		ts_req_c *req = iter->second;
 		req->finish(false, TS_ERR::NET_ERR, "connection closed");
 	}
 
 	reqs.clear();
 }
 
-void ts_client_t::send_req(ts_req_t *req)
+void ts_client_c::send_req(ts_req_c *req)
 {
-	ts_client_t *pmc = pm_clients.get(req->devid);
+	ts_client_c *pmc = pm_clients.get(req->devid);
 	if (!pmc){		
 		ts_util::p(__FUNCTION__ " client not exits: %x\n", req->devid);
 		req->finish(TS_ERR::DEV_OFFLINE, "device offline");
-		ts_req_t::clean(req);
+		ts_req_c::clean(req);
 		return;
 	}
 
@@ -162,7 +162,7 @@ void ts_client_t::send_req(ts_req_t *req)
 	};	
 }
 
-void ts_client_t::send_resp(uint16_t cmd, uint16_t seq, int err, char *msg)
+void ts_client_c::send_resp(uint16_t cmd, uint16_t seq, int err, char *msg)
 {
 	uint16_t resp_cmd = CMD_RESP(cmd, err);
 	int msg_len = msg ? strlen(msg) : 0;
@@ -177,7 +177,7 @@ void ts_client_t::send_resp(uint16_t cmd, uint16_t seq, int err, char *msg)
 	this->send_pdu(buf, resp_cmd, seq, pdu_len);
 }
 
-char *ts_client_t::get_send_buf(int pdu_len)
+char *ts_client_c::get_send_buf(int pdu_len)
 {
 	int adu_len = LEN_ADU_HEAD + pdu_len + LEN_ADU_TAIL;
 	if (adu_len <= TS_SEND_BUF_LEN){
@@ -189,13 +189,13 @@ char *ts_client_t::get_send_buf(int pdu_len)
 	}
 }
 
-void ts_client_t::send_cmd_info(ts_req_t *req)
+void ts_client_c::send_cmd_info(ts_req_c *req)
 {
 	ts_util::p(__FUNCTION__);
 	this->send_req_pdu(get_send_buf(0), req, 0);	
 }
 
-void ts_client_t::send_cmd_pause(ts_req_t *req)
+void ts_client_c::send_cmd_pause(ts_req_c *req)
 {
 	int pdu_len = sizeof(uint8_t);
 	char *send_buf = get_send_buf(pdu_len);
@@ -206,7 +206,7 @@ void ts_client_t::send_cmd_pause(ts_req_t *req)
 	this->send_req_pdu(send_buf, req, pdu_len);
 }
 
-void ts_client_t::send_req_pdu(char *send_buf, ts_req_t *req, uint32_t pdu_len)
+void ts_client_c::send_req_pdu(char *send_buf, ts_req_c *req, uint32_t pdu_len)
 {			
 	ts_util::p(__FUNCTION__);
 		
@@ -216,14 +216,14 @@ void ts_client_t::send_req_pdu(char *send_buf, ts_req_t *req, uint32_t pdu_len)
 	send_pdu(send_buf, req, pdu_len);
 }
 
-void ts_client_t::send_pdu(char *send_buf, ts_req_t *req, uint32_t pdu_len)
+void ts_client_c::send_pdu(char *send_buf, ts_req_c *req, uint32_t pdu_len)
 {			
 	ts_util::p(__FUNCTION__);
 
 	send_pdu(send_buf, req->cmd, req->seq, pdu_len);
 }
 
-void ts_client_t::send_pdu(char *send_buf, uint16_t cmd, uint16_t seq, uint32_t pdu_len)
+void ts_client_c::send_pdu(char *send_buf, uint16_t cmd, uint16_t seq, uint32_t pdu_len)
 {
 	ts_util::p(__FUNCTION__ " cmd[0x%x],seq[%d], pdu_len[%d]", cmd, seq, pdu_len);
 	ts_adu_head_t *send_adu_head = (ts_adu_head_t *)send_buf;
@@ -238,7 +238,7 @@ void ts_client_t::send_pdu(char *send_buf, uint16_t cmd, uint16_t seq, uint32_t 
 	this->send_adu(send_buf, adu_len);
 }
 
-void ts_client_t::add_req(ts_req_t *req)
+void ts_client_c::add_req(ts_req_c *req)
 {	
 	req->seq = this->getSeq();
 	req->client = this;	
@@ -247,7 +247,7 @@ void ts_client_t::add_req(ts_req_t *req)
 	ts_util::p(__FUNCTION__ " reqs size: %d", reqs.size());
 }
 
-void ts_client_t::del_req(ts_req_t *req)
+void ts_client_c::del_req(ts_req_c *req)
 {
 	ts_util::p(__FUNCTION__ " del req: %x", req);
 	this->reqs.erase(req->seq);
@@ -255,7 +255,7 @@ void ts_client_t::del_req(ts_req_t *req)
 	ts_util::p(__FUNCTION__ " reqs size: %d", reqs.size());
 }
 
-ts_req_t *ts_client_t::get_req(int seq)
+ts_req_c *ts_client_c::get_req(int seq)
 {	
 	return this->reqs[seq];
 }
